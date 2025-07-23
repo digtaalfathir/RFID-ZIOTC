@@ -8,8 +8,8 @@ import http.client
 from Logger import Logger
 from RestAPI import RestAPI
 
-DEBUG_SERVER = "192.168.123.1"
-DEBUG_PORT = 40514
+DEBUG_SERVER = "192.168.1.25"
+DEBUG_PORT = 514
 LOG_ONLY_TO_CONSOLE = False
 REST_API_RETRY_COUNT = 3
 BATCH_WINDOW = 5  # Detik
@@ -34,7 +34,7 @@ def sigHandler(signum, frame):
 def post_to_flask(payload):
     try:
         json_data = json.dumps(payload)
-        conn = http.client.HTTPConnection("192.168.123.1", 5000, timeout=2)
+        conn = http.client.HTTPConnection(DEBUG_SERVER, 5000, timeout=2)
         headers = {"Content-type": "application/json"}
         conn.request("POST", "/rfid", json_data, headers)
         res = conn.getresponse()
@@ -42,6 +42,43 @@ def post_to_flask(payload):
         logger.debug(f"POST to Flask OK: {res.status}")
     except Exception as e:
         logger.err(f"HTTP POST failed: {str(e)}")
+
+def post_to_api(payload):
+    try:
+        json_data = json.dumps(payload)
+        # Ganti HTTPSConnection menjadi HTTPConnection
+        conn = http.client.HTTPConnection("product.suite.stechoq-j.com", timeout=5)
+        headers = {
+            "Content-type": "application/json",
+        }
+        conn.request("POST", "/api/v1/warehouse-management/counting-log-rfid", json_data, headers)
+        res = conn.getresponse()
+        response_body = res.read().decode()
+        conn.close()
+
+        logger.debug(f"POST to API OK: {res.status} - {response_body}")
+
+        # Kirim hasil response API ke server lokal untuk dimonitor
+        debug_payload = {
+            "status": res.status,
+            "response": response_body,
+            "original_payload": payload
+        }
+        post_to_flask({
+            "api_result": debug_payload
+        })
+
+    except Exception as e:
+        logger.err(f"HTTP POST to API failed: {str(e)}")
+
+        # Forward error ke Flask juga
+        post_to_flask({
+            "api_result": {
+                "error": str(e),
+                "original_payload": payload
+            }
+        })
+
 
 def flush_batch():
     global tag_batch, batch_metadata
@@ -53,6 +90,7 @@ def flush_batch():
             "timestamp": batch_metadata["timestamp"]
         }
         post_to_flask(payload)
+        post_to_api(payload)
         logger.info(f"Flushed {len(tag_batch)} tags: {payload}")
         tag_batch = []  # Clear buffer
 
