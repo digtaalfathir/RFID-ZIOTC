@@ -9,8 +9,3 @@ Documentation for IoT connector can be found at [IoT Connector](https://zebradev
 ## Prerequisites
  Latest version of firmware supporting IoT connector.
 
-## Contributing
-This project welcomes contributions. Please check out our [Contributing guide](CONTRIBUTING.md) to learn more on how to get started.
-
-## License
-[MIT](LICENSE.txt)
