@@ -7,7 +7,7 @@ import http.client
 from Logger import Logger
 from RestAPI import RestAPI
 
-DEBUG_SERVER = "192.168.0.88"
+DEBUG_SERVER = "192.168.0.234"
 DEBUG_PORT = 514
 LOG_ONLY_TO_CONSOLE = False
 REST_API_RETRY_COUNT = 3
@@ -47,9 +47,9 @@ def post_to_flask(payload):
 def post_to_api(payload):
     try:
         json_data = json.dumps(payload)
-        conn = http.client.HTTPConnection("product.suite.stechoq-j.com", timeout=5)
+        conn = http.client.HTTPConnection("wms.suite.stechoq-j.com", timeout=5)
         headers = {"Content-type": "application/json"}
-        conn.request("POST", "api/v1/warehouse-management/jmp/log-rfids", json_data, headers)
+        conn.request("POST", "/api/v1/warehouse-management/counting-log-rfid", json_data, headers)
         res = conn.getresponse()
         response_body = res.read().decode()
         conn.close()
